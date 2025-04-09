@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Institut Euclides Route</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.css" />
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+    }
+
+    .navbar {
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      background-color: #2c3e50;
+      padding: 10px;
+      color: white;
+      font-size: 24px;
+    }
+
+    .navbar div {
+      cursor: pointer;
+    }
+
+    #map, #phones, #text {
+      display: none;
+      height: calc(100vh - 60px);
+      padding: 10px;
+    }
+
+    #map {
+      height: calc(100vh - 60px);
+      width: 100%;
+    }
+
+    #phones, #text {
+      background-color: #ecf0f1;
+      font-size: 18px;
+    }
+
+    ul {
+      padding-left: 20px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="navbar">
+    <div onclick="showSection('map')">🗺️</div>
+    <div onclick="showSection('phones')">📞</div>
+    <div onclick="showSection('text')">📄</div>
+    <div onclick="locateUser()">📍</div>
+  </div>
+
+  <div id="map"></div>
+  <div id="phones">
+    <h2>Informació:</h2>
+    <ul>
+      <li>Consergeria: +34 937 693 776</li>
+      <li>Adreça: INS Euclides | Passeig d'Europa nº 65 | 08397 Pineda de Mar </li>
+    </ul>
+  </div>
+  <div id="text">
+    <h2>Mapa de fotocopia:</h2>
+    <p>Hi!</p>
+  </div>
+
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.js"></script>
+  <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+
+  <script>
+    function showSection(id) {
+      document.getElementById('map').style.display = 'none';
+      document.getElementById('phones').style.display = 'none';
+      document.getElementById('text').style.display = 'none';
+      document.getElementById(id).style.display = 'block';
+
+      if (id === 'map') {
+        setTimeout(() => {
+          map.invalidateSize(); // Resize map when shown
+        }, 100);
+      }
+    }
+
+    // Set up the map
+    var map = L.map('map').setView([41.6126, 2.7105], 14);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    var institutEuclides = [41.6201557, 2.6696198];
+    var rodaliesCalella = [41.614707748849405, 2.6659236958009083];
+
+    L.marker(institutEuclides).addTo(map).bindPopup("Institut Euclides");
+    L.marker(rodaliesCalella).addTo(map).bindPopup("Estació de Rodalies - Calella");
+
+    L.Routing.control({
+      waypoints: [ L.latLng(institutEuclides), L.latLng(rodaliesCalella) ],
+      routeWhileDragging: false,
+      geocoder: L.Control.Geocoder.nominatim(),
+      createMarker: () => null,
+      show: false,
+      addWaypoints: false
+    }).addTo(map);
+
+    // Geolocation on button click
+    function locateUser() {
+      if (!navigator.geolocation) {
+        alert("Geolocation is not supported by your browser.");
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        function (position) {
+          var lat = position.coords.latitude;
+          var lon = position.coords.longitude;
+          var accuracy = position.coords.accuracy;
+
+          // Add user location marker
+          var userMarker = L.marker([lat, lon], {
+            icon: L.icon({
+              iconUrl: 'https://cdn-icons-png.flaticon.com/512/64/64113.png',
+              iconSize: [25, 25],
+              iconAnchor: [12, 12]
+            })
+          }).addTo(map).bindPopup("You are here").openPopup();
+
+          // Optional: add accuracy circle
+          L.circle([lat, lon], {
+            radius: accuracy,
+            color: 'blue',
+            fillColor: '#30f',
+            fillOpacity: 0.2
+          }).addTo(map);
+
+          map.setView([lat, lon], 16);
+          showSection('map');
+        },
+        function () {
+          alert("Unable to retrieve your location.");
+        }
+      );
+    }
+  </script>
+</body>
+</html>
